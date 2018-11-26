@@ -1,2 +1,2 @@
-#Itemz
+#Itemz - API
 An exchange platform
