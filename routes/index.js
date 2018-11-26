@@ -3,7 +3,6 @@ var router = express.Router();
 var xss = require("xss");
 var csrf = require('csurf');
 var csrfProtection = csrf();
-var nodemailer = require('nodemailer');
 var User = require('../models/user');
 
 router.use(csrfProtection);
