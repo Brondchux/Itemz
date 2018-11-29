@@ -1,9 +1,9 @@
 const express = require('express')
 const router = express.Router()
-const User = require('./models/user')
+const User = require('../models/user')
 const passport = require('passport')
 const jwt = require('jsonwebtoken')
-const config = require('./config/database')
+const config = require('../config/database')
 
 // register new user
 router.post('/register', (req, res, next) => {

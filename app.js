@@ -9,7 +9,7 @@ const mongoose = require('mongoose')
 const config = require('./config/database')
 
 // connect to database 
-mongoose.connect(config.database, { useMongoClient: true })
+mongoose.connect(config.database)
 
 // database connection successful
 mongoose.connection.on('connected', () => {
@@ -23,6 +23,7 @@ mongoose.connection.on('error', (err) => {
 
 // save express engine into app variable
 const app = express()
+const indexRoute = require('./routes/index')
 const userRoute = require('./routes/user')
 
 // cors middleware
@@ -33,6 +34,9 @@ app.use(express.static(path.join(__dirname, 'public')))
 
 // bodyparser middleware
 app.use(bodyParser.json())
+
+// defining routes and assigning
+app.use('/', indexRoute)
 app.use('/user', userRoute)
 
 // passport middleware

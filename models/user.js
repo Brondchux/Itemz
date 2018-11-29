@@ -1,51 +1,37 @@
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
-var bcrypt = require('bcrypt-nodejs');
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+const config = require('../config/database')
 
-var schema = new Schema ({
-	fullname: 		{type: String },
-	email: 			{type: String, require: true, unique: true },
-	password: 		{type: String, require: true },
-	role: 			{type: String, default: "user" },
-	invitation:		{type: String },
-	instagram: 		{type: String, unique: true },
-	facebook: 		{type: String, unique: true },
-	twitter: 		{type: String, unique: true },
-	updated: 		{type: Boolean, default: false },
-	isAdmin: 		{type: Boolean, default: false },
-	isUser: 		{type: Boolean, default: true },
-	blocked: 		{type: Boolean, default: false },
-	joined: 		{type: Date, default: Date.now }
-});
+const UserSchema = mongoose.Schema ({
+	name: 			{type: String },
+	email: 			{type: String, required: true, unique: true },
+	username: 		{type: String, required: true },
+	password: 		{type: String, required: true }
+})
 
-schema.methods.encryptPassword = function(password){
-	return bcrypt.hashSync(password, bcrypt.genSaltSync(5), null);
-};
+const User = module.exports = mongoose.model('User', UserSchema)
 
-schema.methods.validPassword = function(password){
-	return bcrypt.compareSync(password, this.password);
+module.exports.getUserById = function(id, callback){
+	User.findById(id, callback)
 }
 
-module.exports = mongoose.model('User', schema);
-
-/////////////// FUNCTIONS ////////////
-
-module.exports.isLoggedIn = function (req, res, next){
-	if(req.isAuthenticated()){
-		return next();
-	}else{
-		res.redirect('/');
-	}
+module.exports.getUserByUsername = function(username, callback){
+	const query = {username: username}
+	User.findOne(query, callback)
 }
 
-module.exports.notLoggedIn = function (req, res, next){
-	if(!req.isAuthenticated()){
-		return next();
-	}else{
-		res.redirect('/');
-	}
+module.exports.addUser = function(newUser, callback){
+	bcrypt.genSalt(10, (err, salt) => {
+		bcrypt.hash(newUser.password, salt, (err, hash) => {
+			if(err) throw err;
+			newUser.password = hash
+			newUser.save(callback)
+		})
+	})
 }
 
-module.exports.escapeRegex = function (text) {
-    return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
-};
+module.exports.comparePassword = function(candidatePassword, hash, callback){
+	bcrypt.compare(candidatePassword, jasj, (err, isMatch) => {
+		callback(null, isMatch)
+	})
+}
