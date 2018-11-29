@@ -1,81 +1,50 @@
-var express = require('express');
-var bodyParser = require('body-parser');
-var cookieParser = require('cookie-parser');
-var mongoose = require('mongoose');
-var session = require('express-session');
-var expressHbs = require('express-handlebars');
-var passport = require('passport');
-var validator = require('express-validator');
-var MongoStore = require('connect-mongo')(session);
+// importing node js required npm modules
+const express = require('express')
+const path = require('path')
+const bodyParser = require('body-parser')
+const cors = require('cors')
+const passport = require('passport')
+const mongoose = require('mongoose')
+// importing our created database connection from config folder
+const config = require('./config/database')
 
-// all route pages must be declared and assigned to variables here
-var indexRouter = require('./routes/index');
+// connect to database 
+mongoose.connect(config.database, { useMongoClient: true })
 
-// initiate the express engine and store in variable app
-var app = express();
+// database connection successful
+mongoose.connection.on('connected', () => {
+	console.log('connected to resource ' + config.database)
+})
 
-// establish a mongo database connection
-mongoose.connect("mongodb://localhost:27017/itemz");
+// database connection error
+mongoose.connection.on('error', (err) => {
+	console.log('resource connection failed ' + err)
+})
 
-// pull in passport configuration to enable user login/logout
-require('./config/passport');
+// save express engine into app variable
+const app = express()
+const userRoute = require('./routes/user')
 
-// view engine setup
-app.engine('.hbs', expressHbs({extname: '.hbs'}));
-app.set('view engine', '.hbs');
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: false}));
-app.use(validator());
-app.use(cookieParser());
-app.use(session({
-	secret: 'mygiantsecret', 
-	resave: false, 
-	saveUnintialized: false,
-	store: new MongoStore({mongooseConnection: mongoose.connection}),
-	cookie: { maxAge: 180 * 60 * 1000 }
-}));
-
-app.use(passport.initialize());
-app.use(passport.session());
+// cors middleware
+app.use(cors())
 
 // static folder
-app.use('/public', express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')))
 
-// Global Vars
-app.use(function(req, res, next){
-	res.locals.login = req.isAuthenticated();
-	res.locals.session = req.session;
-	res.locals.user = req.user || null; // for users access control
-	next();
-});
+// bodyparser middleware
+app.use(bodyParser.json())
+app.use('/user', userRoute)
 
-// all route variables are used here to tie to a route url /example
-app.use('/', indexRouter);
+// passport middleware
+app.use(passport.initialize())
+app.use(passport.session())
+// importing our created passport file from config folder
+require('./config/passport')(passport)
 
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
-});
+// setting port number
+const port = 3000
 
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
-});
-
-// Set Port
-app.set('port', (process.env.PORT || 2000));
-
-app.listen(app.get('port'), function(){
-	console.log('Itemz server started at port ' + app.get('port'));
-});
-
-module.exports = app;
+// start node server
+app.listen(port, () => {
+	console.log('Itemz server started at port ' + port)
+})
