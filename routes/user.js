@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken')
 const config = require('./config/database')
 
 // register new user
-router.post('/signup', (req, res, next) => {
+router.post('/register', (req, res, next) => {
 	let newUser = ({
 		name: req.body.name, 
 		email: req.body.email, 
@@ -59,7 +59,7 @@ router.post('/authenticate', (req, res, next) => {
 	})
 })
 
-// pull up users profile
+// profile
 router.get('/profile', passport.authenticate('jwt', {session: false}), (req, res, next) => {
 	res.json({user: req.user})
 })
