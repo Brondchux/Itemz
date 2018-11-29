@@ -16,7 +16,52 @@ router.post('/signup', (req, res, next) => {
 
 	User.addUser(newUser, (err, user) => {
 		if(err){
-			// https://medium.com/@shreyamduttagupta/api-authentication-using-passport-js-and-json-web-tokens-a6094df40ab0
+			res.json({success: false, msg: 'Failed to register user!'})
+		}else{
+			res.json({success: true, msg: 'New user registered!'})
 		}
 	})
 })
+
+// authenticate
+router.post('/authenticate', (req, res, next) => {
+	const username = req.body.username
+	const password = req.body.password
+
+	User.getUserByUsername(username, (err, user) => {
+		if(err) throw err
+		if(!user){
+			return res.json({success: false, msg: 'User not found!'})
+		}
+		User.comparePassword(password, user.password, (err, isMatch) => {
+			if(err) throw err
+			if(isMatch){
+				const token = jwt.sign(user, config.secret, {
+					expiresIn: 60 // 1 minute
+				})
+
+				// display json response containing user profile details
+				res.json({
+					success: true,
+					token: 'JWT '+ token,
+					user: {
+						id: user._id,
+						name: user.name,
+						username: user.username,
+						password: user.password,
+						email: user.email
+					}
+				})
+			}else{
+				return res.json({ success: false, msg: 'Wrong password combination!' })
+			}
+		})
+	})
+})
+
+// pull up users profile
+router.get('/profile', passport.authenticate('jwt', {session: false}), (req, res, next) => {
+	res.json({user: req.user})
+})
+
+module.exports = router
